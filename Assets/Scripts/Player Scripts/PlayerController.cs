@@ -1,14 +1,14 @@
 using System;
-using UnityEditor.Timeline;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Universal_Scripts;
 
 public enum Direction
 {
-    up = 0,
-    left = 1,
-    down = 2,
-    right = 3
+    Up = 0,
+    Left = 1,
+    Down = 2,
+    Right = 3
 }
 
 public class PlayerController : MonoBehaviour
@@ -19,10 +19,12 @@ public class PlayerController : MonoBehaviour
     
     [Header("Stats")]
     [SerializeField] private float moveSpeed = 5f;
+    [SerializeField] private float health = 100f;
     
     
     [Header("Components")]
     [SerializeField] private Rigidbody2D rb;
+    [SerializeField] private Stun stunScript;
     
     [Header("References")]
     [SerializeField] private GameObject swordObject;
@@ -37,7 +39,7 @@ public class PlayerController : MonoBehaviour
         attackAction.action.performed += Attack;
     }
     
-    void Update()
+    void FixedUpdate()
     {
         Vector2 movementVector = (moveAction.action.ReadValue<Vector2>().normalized) * moveSpeed;
         rb.linearVelocity = movementVector;
@@ -50,11 +52,11 @@ public class PlayerController : MonoBehaviour
     {
         if (Mathf.Abs(movementVector.x) > Mathf.Abs(movementVector.y))
         {
-            return movementVector.x > 0 ? Direction.right : Direction.left;
+            return movementVector.x > 0 ? Direction.Right : Direction.Left;
         }
         else
         {
-            return movementVector.y > 0 ? Direction.up : Direction.down;
+            return movementVector.y > 0 ? Direction.Up : Direction.Down;
         }
     }
 
@@ -81,8 +83,14 @@ public class PlayerController : MonoBehaviour
                 break;
         }
         
-        Vector3 Rotation = new Vector3(transform.rotation.eulerAngles.x, transform.rotation.eulerAngles.y, attackPosition);
-        Instantiate(swordObject, transform.position, Quaternion.Euler(Rotation), transform);
+        Vector3 rotation = new Vector3(transform.rotation.eulerAngles.x, transform.rotation.eulerAngles.y, attackPosition);
+        Instantiate(swordObject, transform.position, Quaternion.Euler(rotation), transform);
+    }
+
+    public void TakeDamage(int damage, float stunTime)
+    {
+        health -= damage;
+        stunScript.StunCooldown(stunTime);
     }
 
     void OnDisable()

@@ -11,7 +11,7 @@ namespace Weapons
         protected float StunTime;
 
 
-        public void OnTriggerEnter2D(Collider2D other)
+        protected virtual void OnTriggerEnter2D(Collider2D other)
         {
             if (other.CompareTag("Enemy"))
             {

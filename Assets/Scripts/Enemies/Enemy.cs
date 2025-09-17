@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using UnityEngine;
+using Universal_Scripts;
 
 namespace Enemies
 {
@@ -8,19 +9,27 @@ namespace Enemies
     {
         public int enemyHealth = 100;
         public float moveSpeed = 2f;
-        [SerializeField] protected Rigidbody2D enemyRigidbody;
 
-        protected float StunCooldown;
+        [Header("Components")] 
+        [SerializeField] protected Rigidbody2D enemyRigidbody;
+        [SerializeField] protected Stun stunScript;
+
+        protected float AttackCooldown;
         
         private Vector2 _direction;
         private bool _isStunned;
+        protected bool IsAttacking;
+        protected bool PlayerInRange;
 
-        protected void Move(Transform playerTransform)
+        protected void Move(Vector3 targetPosition)
         {
-            if(_isStunned)
+            if (stunScript.isStunned)
+            {
+                if (stunScript.isBeingKnockedBack)
+                    enemyRigidbody.linearVelocity = Vector2.zero;
                 return;
-            
-            Vector2 movementVector = playerTransform.position - transform.position;
+            }
+            Vector2 movementVector = targetPosition - transform.position;
             movementVector.Normalize();
             
             _direction = movementVector;
@@ -32,21 +41,22 @@ namespace Enemies
         public void TakeDamage(int damage, float knockBack, float stunTime)
         {
             enemyHealth -= damage;
-            StartCoroutine(KnockBack(knockBack, stunTime));
-            
-            print($"Enemy took {damage}");
+            StartCoroutine(stunScript.StunCooldown(stunTime, knockBack, enemyRigidbody, -_direction));
         }
 
-        IEnumerator KnockBack(float knockBack, float stunTime)
+        protected IEnumerator CheckRange(Transform playerTransform, float range)
         {
-            _isStunned = true;
-            
-            enemyRigidbody.linearVelocity = -_direction * knockBack;
-            print($"Enemy knocked back with {knockBack} force");
-            
-            yield return new WaitForSeconds(stunTime);
+            if (Vector3.Distance(transform.position, playerTransform.position) >= range)
+            {
+                PlayerInRange = false;
+                yield break;
+            }
+            PlayerInRange = true;
+        }
 
-            _isStunned = false;
+        public virtual IEnumerator Attack()
+        {
+            yield break;
         }
     }
 }
